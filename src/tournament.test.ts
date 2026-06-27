@@ -188,4 +188,86 @@ it('B1 : aucune répétition de paire sur 11 rondes avec 16 joueurs', () => {
 
     expect(totalRepeats).toBe(0)
   })
+  it('simulation réaliste : tournoi complet avec résultats aléatoires', () => {
+    // Seed fixe pour reproductibilité
+    let seed = 42
+    function seededRandom(): number {
+      seed = (seed * 1664525 + 1013904223) & 0xffffffff
+      return (seed >>> 0) / 0xffffffff
+    }
+
+    function randomResult(whiteId: string, blackId: string | null): GameOutcome {
+      if (!blackId) return 'win'
+      const r = seededRandom()
+      if (r < 0.4) return 'win'
+      if (r < 0.75) return 'loss'
+      return 'draw'
+    }
+
+    const players = makePlayers(20) // nombre impair pour forcer des byes
+    let standings = players.map(initStanding)
+
+    const allPairsEverPlayed = new Set<string>()
+    let b1Violations = 0
+    let colorStreakViolations = 0
+    let colorDiffViolations = 0
+    let scoreGapViolations = 0
+    let doubleByeViolations = 0
+    const byeCount = new Map<string, number>()
+
+    for (let round = 1; round <= 7; round++) {
+      const roundResult = generateRound(standings, round)
+
+      for (const pairing of roundResult.pairings) {
+        if (pairing.isBye) {
+          const count = byeCount.get(pairing.whiteId!) ?? 0
+          byeCount.set(pairing.whiteId!, count + 1)
+          if (count + 1 > 1) doubleByeViolations++
+          continue
+        }
+
+        // B1 : pas de répétition
+        const key = [pairing.whiteId, pairing.blackId].sort().join('-')
+        if (allPairsEverPlayed.has(key)) b1Violations++
+        allPairsEverPlayed.add(key)
+
+        // Écart de score (sauf ronde 1)
+        if (round > 1) {
+          const white = standings.find(s => s.player.id === pairing.whiteId)!
+          const black = standings.find(s => s.player.id === pairing.blackId)!
+          const gap = Math.abs(white.score - black.score)
+          if (gap > 1) scoreGapViolations++
+        }
+      }
+
+      standings = applyRoundResults(standings, roundResult, randomResult)
+
+      // Vérifier couleurs après application
+      for (const s of standings) {
+        // Jamais ±2 dépassé
+        if (Math.abs(s.colorDifference) > 2) colorDiffViolations++
+
+        // Jamais 3 fois la même couleur d'affilée
+        const played = s.colorHistory.filter((c): c is 'white' | 'black' => c !== null)
+        for (let i = 2; i < played.length; i++) {
+          if (played[i] === played[i-1] && played[i] === played[i-2]) {
+            colorStreakViolations++
+          }
+        }
+      }
+    }
+
+    console.log(`B1 violations: ${b1Violations}`)
+    console.log(`Color diff violations (>±2): ${colorDiffViolations}`)
+    console.log(`Color streak violations (3x): ${colorStreakViolations}`)
+    console.log(`Score gap violations (>1pt): ${scoreGapViolations}`)
+    console.log(`Double bye violations: ${doubleByeViolations}`)
+
+    expect(b1Violations).toBe(0)
+    expect(colorDiffViolations).toBe(0)
+    expect(colorStreakViolations).toBe(0)
+    expect(doubleByeViolations).toBe(0)
+    // Score gap : on vérifie juste qu'il y en a peu (pas zéro, c'est parfois inévitable)
+    expect(scoreGapViolations).toBeLessThan(10)
+  })
 })
