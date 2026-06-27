@@ -4,6 +4,7 @@ export { generateRound } from './generateRound'
 export { applyRoundResults } from './applyRound'
 export { initStanding, buildStandingsFromHistory } from './standings'
 export { sortByRanking, groupByScore } from './ranking'
+export { buchholz, buchholzTruncated, sonnebornBerger, finalRanking } from './tiebreaks'
 export type {
   Player,
   PlayerStanding,
