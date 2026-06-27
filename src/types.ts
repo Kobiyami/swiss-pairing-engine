@@ -41,3 +41,17 @@ export interface RoundPairings {
   round: number
   pairings: Pairing[]
 }
+export interface TournamentInfo {
+  name: string
+  city?: string
+  federation?: string
+  dateStart?: string  // YYYY-MM-DD
+  dateEnd?: string
+  totalRounds: number
+}
+
+export type GameResultInput = {
+  whiteId: string
+  blackId: string | null
+  result: 'white' | 'black' | 'draw' | 'bye'
+}
