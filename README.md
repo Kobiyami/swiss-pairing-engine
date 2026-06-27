@@ -1,75 +1,96 @@
 # swiss-pairing-engine
-
-A TypeScript implementation of the FIDE Dutch Swiss pairing system for chess tournaments.
-
+A TypeScript implementation of the FIDE Dutch System pairing engine for Swiss chess tournaments, using the Edmonds-Blossom weighted matching algorithm to guarantee optimal pairings.
 ## Features
-
-- ♟️ FIDE Dutch System pairing algorithm
-- 🎨 Color preference management (absolute, strong, mild)
-- 🏆 Score bracket grouping and downfloat handling
-- 🎯 Bye allocation (FIDE compliant)
-- ✅ Fully tested with Vitest (28 tests)
-- 📦 Pure TypeScript, no external dependencies at runtime
-
+- **B1** — No player faces the same opponent twice
+- **B2** — Color difference never exceeds ±2, no three consecutive games with the same color
+- **B5/B6** — Float history tracked and penalized to avoid consecutive up/down floats
+- **Bye** — Assigned to the lowest-ranked eligible player, never twice to the same player
+- **Optimal matching** — Edmonds-Blossom algorithm finds the globally optimal pairing across all players, avoiding the limitations of bracket-by-bracket approaches
 ## Architecture
-
 The engine is built as a pure TypeScript module, completely independent of any UI framework or database. This makes it usable both:
 - **Online** — integrated into a web application (React, Vue, etc.)
 - **Offline** — as a standalone tool running in any JavaScript environment
 ```
 src/
-├── types.ts           # Core data structures (Player, Pairing, GameResult...)
-├── standings.ts       # Score and history computation
-├── ranking.ts         # Player sorting and score bracket grouping
-├── pairing.ts         # Homogeneous bracket pairing (top half vs bottom half)
-├── colorPreference.ts # FIDE color preference calculation
-├── colorAssignment.ts # Color assignment within a pair
-├── bye.ts             # Bye player selection
-├── generateRound.ts   # Round orchestration
-└── applyRound.ts      # Apply round results to standings
+├── types.ts              # Core types: Player, PlayerStanding, GameResult, Pairing
+├── generateRound.ts      # Main entry point — builds the weighted graph and runs Blossom
+├── floatOptimizer.ts     # Post-optimization pass for B5/B6 violations
+├── colorAssignment.ts    # Assigns White/Black based on FIDE E4/E5 rules
+├── colorPreference.ts    # Computes each player's color preference and strength
+├── standings.ts          # Builds and updates player standings from game history
+├── applyRound.ts         # Applies round results to standings
+├── ranking.ts            # Sorts players and groups them by score
+└── bye.ts                # Selects the bye player
 ```
+## How it works
+Instead of pairing players bracket-by-bracket (which leads to unsolvable color conflicts), this engine models the entire field as a weighted graph:
+- Each possible pairing is an edge
+- The weight encodes FIDE priorities: score proximity, color compatibility, float history
+- Forbidden pairings (B1, absolute B2 conflicts) are excluded as edges
+- The Edmonds-Blossom algorithm finds the maximum weight perfect matching
+This guarantees globally optimal pairings in O(n³) time.
 ## Installation
 ```bash
+clone and build from source:
+```bash
+git clone https://github.com/Kobiyami/swiss-pairing-engine.git
+cd swiss-pairing-engine
 npm install
 ```
-
-## Running tests
-```bash
-npx vitest run
-```
-
 ## Usage
 ```typescript
 import { generateRound } from './src/generateRound'
 import { applyRoundResults } from './src/applyRound'
 import { initStanding } from './src/standings'
 import type { Player } from './src/types'
-
 const players: Player[] = [
-  { id: '1', name: 'Alice', rating: 1800, pairingNumber: 1 },
-  { id: '2', name: 'Bob', rating: 1750, pairingNumber: 2 },
-  // ...
+  { id: '1', name: 'Alice', rating: 2400, pairingNumber: 1 },
+  { id: '2', name: 'Bob',   rating: 2350, pairingNumber: 2 },
+  { id: '3', name: 'Carol', rating: 2300, pairingNumber: 3 },
+  { id: '4', name: 'Dave',  rating: 2250, pairingNumber: 4 },
 ]
-
 let standings = players.map(initStanding)
-
-// Generate round 1
-const round1 = generateRound(standings, 1)
-console.log(round1.pairings)
-
-// Apply results and generate round 2
-standings = applyRoundResults(standings, round1)
-const round2 = generateRound(standings, 2)
+for (let round = 1; round <= 3; round++) {
+  const pairings = generateRound(standings, round)
+  console.log(`Round ${round}:`, pairings)
+  // Apply results (win/loss/draw) — here all whites win
+  standings = applyRoundResults(standings, pairings, () => 'win')
+}
 ```
-
-## Known limitations & roadmap
-- [ ] Full backtracking for inter-bracket downfloat resolution (currently uses greedy approach)
-- [ ] Color balance enforcement across all rounds (known edge case with bottom-ranked players)
+## Running tests
+```bash
+npm run test
+# or
+npx vitest run
+```
+The test suite covers:
+- Color balance over 9 rounds (32 players)
+- No repeated pairings over 11 rounds (16 players)
+- Bye assignment correctness
+- Float history (B5/B6) propagation
+- Realistic tournament simulation with random results (20 players, 7 rounds)
+## FIDE rules implemented
+| Rule | Description | Status |
+|------|-------------|--------|
+| B1 | No repeated pairings | ✅ Hard constraint |
+| B2 | Color difference ≤ ±2, no 3 consecutive same color | ✅ Hard constraint |
+| B5 | Avoid consecutive down-floats | ✅ Soft penalty |
+| B6 | Avoid consecutive up-floats | ✅ Soft penalty |
+| E4 | Higher-ranked player gets color priority | ✅ |
+| E5 | Alternation preference | ✅ |
+## Known limitations
+- B5/B6 are soft constraints — consecutive floats may occur when mathematically unavoidable
+- The engine does not implement acceleration (used in very large tournaments)
+- No TRF file import/export (yet)
+## Roadmap
+- [x] Weighted matching via Blossom algorithm (replaces greedy bracket approach)
+- [x] Color balance enforcement (B2 — ±2 hard constraint)
+- [x] Float history tracking (B5/B6)
 - [ ] Tiebreak calculations (Buchholz, Sonneborn-Berger, performance rating)
 - [ ] FIDE-certified test suite validation
-
+- [ ] TRF file import/export
+- [ ] Acceleration support for large tournaments
 ## Author
 Guillaume Fournier — [GitHub](https://github.com/Kobiyami)
-
 ## License
 MIT
