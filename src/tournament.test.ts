@@ -163,4 +163,29 @@ it('vérifie que dans chaque paire les deux joueurs ont des couleurs différente
     standings = applyRoundResults(standings, roundResult, deterministicResult)
   }
 })
+it('B1 : aucune répétition de paire sur 11 rondes avec 16 joueurs', () => {
+    const players = makePlayers(16)
+    let standings = players.map(initStanding)
+
+    const allPairsEverPlayed = new Set<string>()
+    let totalRepeats = 0
+
+    for (let round = 1; round <= 11; round++) {
+      const roundResult = generateRound(standings, round)
+
+      for (const pairing of roundResult.pairings) {
+        if (pairing.isBye) continue
+        const key = [pairing.whiteId, pairing.blackId].sort().join('-')
+        if (allPairsEverPlayed.has(key)) {
+          totalRepeats++
+          console.log(`Round ${round} REPEAT: ${key}`)
+        }
+        allPairsEverPlayed.add(key)
+      }
+
+      standings = applyRoundResults(standings, roundResult, deterministicResult)
+    }
+
+    expect(totalRepeats).toBe(0)
+  })
 })
