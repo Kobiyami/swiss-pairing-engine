@@ -4,7 +4,7 @@ import { assignColors } from './colorAssignment'
 import { selectByePlayer } from './bye'
 import { getColorPreference } from './colorPreference'
 import { optimizeFloats } from './floatOptimizer'
-import blossom from 'edmonds-blossom'
+import blossom from 'edmonds-blossom-esm'
 
 /**
  * Calcule le poids d'une paire selon les règles FIDE.

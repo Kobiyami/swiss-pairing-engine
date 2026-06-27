@@ -5,9 +5,8 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-  "test": "vitest run",
-  "postinstall": "npx patch-package"
-},
+    "test": "vitest run"
+  },
   "keywords": [
     "chess",
     "swiss",
@@ -24,6 +23,6 @@
     "vitest": "^4.1.9"
   },
   "dependencies": {
-    "edmonds-blossom": "^1.0.0"
+    "edmonds-blossom-esm": "^1.0.1"
   }
 }
