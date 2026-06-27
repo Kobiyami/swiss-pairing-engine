@@ -12,10 +12,8 @@ import { optimizeFloats } from './floatOptimizer'
  * Retourne null si la paire est interdite (B1 ou B2 absolu).
  */
 function pairWeight(a: PlayerStanding, b: PlayerStanding): number | null {
-  // B1 : ne jamais rejouer le même adversaire — interdit absolu
   if (a.opponentsPlayed.has(b.player.id)) return null
 
-  // B2 : conflit de couleur absolu des deux côtés — interdit absolu
   const prefA = getColorPreference(a)
   const prefB = getColorPreference(b)
   if (
@@ -24,29 +22,31 @@ function pairWeight(a: PlayerStanding, b: PlayerStanding): number | null {
     prefA.preferredColor === prefB.preferredColor
   ) return null
 
-  // Base : on part d'un poids élevé et on pénalise
   let weight = 1000
 
-  // Pénalité pour écart de score (priorité maximale FIDE)
   const scoreDiff = Math.abs(a.score - b.score)
   weight -= scoreDiff * 100
 
-  // Pénalité pour conflit de couleur fort (non absolu)
   if (
     prefA.strength === 'strong' &&
     prefB.strength === 'strong' &&
     prefA.preferredColor === prefB.preferredColor
   ) weight -= 10
 
-  if (
-    prefA.strength === 'absolute' &&
-    prefB.strength !== 'absolute'
-  ) weight += 5 // bonus : on peut satisfaire la contrainte absolue
+  if (prefA.strength === 'absolute' && prefB.strength !== 'absolute') weight += 5
+  if (prefB.strength === 'absolute' && prefA.strength !== 'absolute') weight += 5
 
-  if (
-    prefB.strength === 'absolute' &&
-    prefA.strength !== 'absolute'
-  ) weight += 5
+  // B5 : pénalité si le joueur qui floaterait down a déjà flotté down
+  if (scoreDiff > 0) {
+    const lastFloat = (p: PlayerStanding) =>
+      [...p.floatHistory].reverse().find(f => f !== null)
+
+    const floatedDown = a.score < b.score ? a : b
+    const floatedUp   = a.score > b.score ? a : b
+
+    if (lastFloat(floatedDown) === 'down') weight -= 200  // B5
+    if (lastFloat(floatedUp)   === 'up')   weight -= 150  // B6
+  }
 
   return weight
 }
