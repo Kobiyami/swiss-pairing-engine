@@ -1,0 +1,19 @@
+diff --git a/node_modules/edmonds-blossom/app/blossom.js b/node_modules/edmonds-blossom/app/blossom.js
+index b1de385..262de16 100644
+--- a/node_modules/edmonds-blossom/app/blossom.js
++++ b/node_modules/edmonds-blossom/app/blossom.js
+@@ -266,12 +266,12 @@ Edmonds.prototype.addBlossom = function (base, k) {
+   var bb = this.inBlossom[base];
+   var bv = this.inBlossom[v];
+   var bw = this.inBlossom[w];
+-  b = this.unusedBlossoms.pop();
++  var b = this.unusedBlossoms.pop();
+   //console.log('DEBUG: addBlossom(' + base + ',' + k + ')' + ' (v=' + v + ' w=' + w + ')' + ' -> ' + b);
+   this.blossomBase[b] = base;
+   this.blossomParent[b] = -1;
+   this.blossomParent[bb] = b;
+-  path = this.blossomChilds[b] = [];
++  var path = this.blossomChilds[b] = [];
+   var endPs = this.blossomEndPs[b] = [];
+   while (bv !== bb) {
+     this.blossomParent[bv] = b;

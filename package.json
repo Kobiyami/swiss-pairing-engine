@@ -5,8 +5,9 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "test": "vitest run"
-  },
+  "test": "vitest run",
+  "postinstall": "patch-package"
+},
   "keywords": [
     "chess",
     "swiss",
