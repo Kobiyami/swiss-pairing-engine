@@ -40,10 +40,15 @@ export function assignColors(playerA: PlayerStanding, playerB: PlayerStanding): 
       return buildAssignment(playerA, playerB, prefA.preferredColor)
     }
     // Même préférence — on donne la couleur au joueur le plus déséquilibré
-    if (Math.abs(playerA.colorDifference) >= Math.abs(playerB.colorDifference)) {
+    // En cas d'égalité, le mieux classé (pairingNumber plus petit) reçoit sa couleur préférée
+    if (Math.abs(playerA.colorDifference) > Math.abs(playerB.colorDifference)) {
       return buildAssignment(playerA, playerB, prefA.preferredColor)
-    } else {
+    } else if (Math.abs(playerB.colorDifference) > Math.abs(playerA.colorDifference)) {
       return buildAssignment(playerB, playerA, prefB.preferredColor)
+    } else {
+      const winner = playerA.player.pairingNumber < playerB.player.pairingNumber ? playerA : playerB
+      const loser  = winner === playerA ? playerB : playerA
+      return buildAssignment(winner, loser, prefA.preferredColor)
     }
   }
 

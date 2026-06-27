@@ -11,21 +11,15 @@ function canPlay(a: PlayerStanding, b: PlayerStanding): boolean {
  * c'est-à-dire qu'on peut leur attribuer des couleurs différentes sans
  * violer une contrainte absolue des deux côtés.
  */
-function colorsCompatible(a: PlayerStanding, b: PlayerStanding): boolean {
+
+function hasAbsoluteColorConflict(a: PlayerStanding, b: PlayerStanding): boolean {
   const prefA = getColorPreference(a)
   const prefB = getColorPreference(b)
-
-  // Si les deux ont une préférence absolue pour la MÊME couleur,
-  // on ne peut pas satisfaire les deux → incompatible
-  if (
+  return (
     prefA.strength === 'absolute' &&
     prefB.strength === 'absolute' &&
     prefA.preferredColor === prefB.preferredColor
-  ) {
-    return false
-  }
-
-  return true
+  )
 }
 /**
  * Tente d'apparier la moitié haute avec une permutation de la moitié basse,
@@ -50,10 +44,10 @@ function backtrackPairing(
     .filter(({ i }) => !usedBottom.has(i))
     .filter(({ b }) => canPlay(top, b))
 
-  // Étape 1 : on essaie d'abord uniquement les candidats compatibles en couleur
-  const compatible = available.filter(({ b }) => colorsCompatible(top, b))
-  
-  for (const { b: bottom, i } of compatible) {
+  // Étape 1 : candidats sans conflit absolu de couleur
+  const noConflict = available.filter(({ b }) => !hasAbsoluteColorConflict(top, b))
+
+  for (const { b: bottom, i } of noConflict) {
     usedBottom.add(i)
     currentPairs.push(orderPair(top, bottom))
     const result = backtrackPairing(topHalf, bottomHalf, topIndex + 1, usedBottom, currentPairs)
@@ -62,15 +56,12 @@ function backtrackPairing(
     currentPairs.pop()
   }
 
-  // Étape 2 : si aucun compatible ne donne une solution complète,
-  // on accepte les incompatibles en dernier recours
-  const incompatible = available.filter(({ b }) => !colorsCompatible(top, b))
+  // Étape 2 : conflit absolu accepté en dernier recours plutôt que laisser sans partenaire
+  const withConflict = available.filter(({ b }) => hasAbsoluteColorConflict(top, b))
 
-  for (const { b: bottom, i } of incompatible) {
+  for (const { b: bottom, i } of withConflict) {
     usedBottom.add(i)
-    // On ordonne la paire pour que le joueur le plus déséquilibré soit playerA
-
-currentPairs.push(orderPair(top, bottom))
+    currentPairs.push(orderPair(top, bottom))
     const result = backtrackPairing(topHalf, bottomHalf, topIndex + 1, usedBottom, currentPairs)
     if (result !== null) return result
     usedBottom.delete(i)
@@ -117,40 +108,34 @@ export function pairHomogeneousBracket(
 
   const pairs = backtrackPairing(topHalf, bottomHalf, 0, new Set(), [])
 
-  if (pairs !== null) {
-    // Succès total — tout le monde est apparié
+ if (pairs !== null) {
     const unpaired: PlayerStanding[] = floatedOut ? [floatedOut] : []
     return { pairs, unpaired }
   }
 
-  // Backtracking complet échoué — on revient à l'approche gloutonne
-  // pour au moins minimiser les non-appariés
-  const fallbackPairs: [PlayerStanding, PlayerStanding][] = []
-  const usedBottom = new Set<string>()
+  // Backtracking échoué — réessayer avec la liste mélangée (top+bottom ensemble)
+  // pour casser les blocs de même couleur
+  const allPlayers = [...topHalf, ...bottomHalf]
+  const mixedPairs: [PlayerStanding, PlayerStanding][] = []
+  const usedMixed = new Set<string>()
+
+  for (let i = 0; i < allPlayers.length; i++) {
+    if (usedMixed.has(allPlayers[i].player.id)) continue
+    for (let j = i + 1; j < allPlayers.length; j++) {
+      if (usedMixed.has(allPlayers[j].player.id)) continue
+      if (!canPlay(allPlayers[i], allPlayers[j])) continue
+      if (hasAbsoluteColorConflict(allPlayers[i], allPlayers[j])) continue
+      mixedPairs.push(orderPair(allPlayers[i], allPlayers[j]))
+      usedMixed.add(allPlayers[i].player.id)
+      usedMixed.add(allPlayers[j].player.id)
+      break
+    }
+  }
+
   const unpaired: PlayerStanding[] = []
-
-  for (const top of topHalf) {
-    const opponent = bottomHalf.find(
-      b => !usedBottom.has(b.player.id) && canPlay(top, b)
-    )
-    if (opponent) {
-      const pair: [PlayerStanding, PlayerStanding] =
-  Math.abs(top.colorDifference) >= Math.abs(opponent.colorDifference)
-    ? [top, opponent]
-    : [opponent, top]
-    fallbackPairs.push(pair)
-      usedBottom.add(opponent.player.id)
-    } else {
-      unpaired.push(top)
-    }
+  for (const p of allPlayers) {
+    if (!usedMixed.has(p.player.id)) unpaired.push(p)
   }
-
-  for (const bottom of bottomHalf) {
-    if (!usedBottom.has(bottom.player.id)) {
-      unpaired.push(bottom)
-    }
-  }
-
   if (floatedOut) unpaired.push(floatedOut)
-  return { pairs: fallbackPairs, unpaired }
+  return { pairs: mixedPairs, unpaired }
 }

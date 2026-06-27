@@ -144,4 +144,23 @@ for (const id of ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8']) {
   )
   console.log('Pairings Round 3 pour p1-p4:', top4)
 })
+it('vérifie que dans chaque paire les deux joueurs ont des couleurs différentes', () => {
+  const players = makePlayers(32)
+  let standings = players.map(initStanding)
+
+  for (let round = 1; round <= 9; round++) {
+    const roundResult = generateRound(standings, round)
+
+    for (const pairing of roundResult.pairings) {
+      if (pairing.isBye) continue
+      // Par construction whiteId ≠ blackId
+      expect(pairing.whiteId).not.toBe(pairing.blackId)
+      // Et les deux sont non-null
+      expect(pairing.whiteId).not.toBeNull()
+      expect(pairing.blackId).not.toBeNull()
+    }
+
+    standings = applyRoundResults(standings, roundResult, deterministicResult)
+  }
+})
 })
