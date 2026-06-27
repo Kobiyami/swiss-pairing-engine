@@ -11,9 +11,10 @@ export type Color = 'white' | 'black'
 
 export interface GameResult {
   round: number
-  opponentId: string | null // null si bye
-  color: Color | null // null si bye
+  opponentId: string | null
+  color: Color | null
   result: GameOutcome
+  float?: 'up' | 'down' | null  // optionnel — absent si pas de float
 }
 
 export interface PlayerStanding {
@@ -32,6 +33,8 @@ export interface Pairing {
   whiteId: string | null
   blackId: string | null
   isBye: boolean
+  whiteFloat?: 'up' | 'down' | null
+  blackFloat?: 'up' | 'down' | null
 }
 
 export interface RoundPairings {

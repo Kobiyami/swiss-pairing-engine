@@ -45,6 +45,7 @@ export function applyRoundResults(
           opponentId: pairing.blackId,
           color: 'white',
           result: whiteOutcome,
+          float: pairing.whiteFloat ?? null,
         })
       )
     }
@@ -56,6 +57,7 @@ export function applyRoundResults(
           opponentId: pairing.whiteId,
           color: 'black',
           result: blackOutcome,
+          float: pairing.blackFloat ?? null,
         })
       )
     }

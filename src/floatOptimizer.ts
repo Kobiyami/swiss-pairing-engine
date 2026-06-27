@@ -47,7 +47,17 @@ function swapCandidates(
     [[a, d], [b, c]],
   ]
 }
+import { getColorPreference } from './colorPreference'
 
+function hasAbsoluteColorConflict(a: PlayerStanding, b: PlayerStanding): boolean {
+  const prefA = getColorPreference(a)
+  const prefB = getColorPreference(b)
+  return (
+    prefA.strength === 'absolute' &&
+    prefB.strength === 'absolute' &&
+    prefA.preferredColor === prefB.preferredColor
+  )
+}
 /**
  * Post-optimise les violations B5/B6 par échanges locaux de paires,
  * sans jamais casser B1 (déjà joué) ni changer le nombre de paires.
@@ -76,6 +86,9 @@ export function optimizeFloats(
           // B1 : vérifier les deux nouvelles paires
           if (!b1Ok(newP1[0], newP1[1])) continue
           if (!b1Ok(newP2[0], newP2[1])) continue
+          // B2 : pas de conflit absolu de couleur
+          if (hasAbsoluteColorConflict(newP1[0], newP1[1])) continue
+          if (hasAbsoluteColorConflict(newP2[0], newP2[1])) continue
 
           const candidate = [...current]
           candidate[i] = newP1

@@ -4,6 +4,7 @@ import { assignColors } from './colorAssignment'
 import { selectByePlayer } from './bye'
 import { getColorPreference } from './colorPreference'
 import blossom from 'edmonds-blossom'
+import { optimizeFloats } from './floatOptimizer'
 
 /**
  * Calcule le poids d'une paire selon les règles FIDE.
@@ -95,16 +96,27 @@ export function generateRound(
   // Construire les pairings finaux avec assignation des couleurs
   const allPairings: Pairing[] = []
   let board = 1
-
-  for (const [a, b] of pairs) {
-    const { white, black } = assignColors(a, b)
-    allPairings.push({
-      board: board++,
-      whiteId: white.player.id,
-      blackId: black.player.id,
-      isBye: false,
-    })
+const optimizedPairs = optimizeFloats(pairs)
+ for (const [a, b] of optimizedPairs) {
+  const { white, black } = assignColors(a, b)
+  
+  let whiteFloat: 'up' | 'down' | null = null
+  let blackFloat: 'up' | 'down' | null = null
+  
+  if (white.score !== black.score) {
+    whiteFloat = white.score > black.score ? 'down' : 'up'
+    blackFloat = black.score > white.score ? 'down' : 'up'
   }
+
+  allPairings.push({
+    board: board++,
+    whiteId: white.player.id,
+    blackId: black.player.id,
+    isBye: false,
+    whiteFloat,
+    blackFloat,
+  })
+}
 
   if (byePlayer) {
     allPairings.push({
