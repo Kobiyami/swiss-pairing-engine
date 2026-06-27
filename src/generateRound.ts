@@ -3,8 +3,8 @@ import { sortByRanking } from './ranking'
 import { assignColors } from './colorAssignment'
 import { selectByePlayer } from './bye'
 import { getColorPreference } from './colorPreference'
-import blossom from 'edmonds-blossom'
 import { optimizeFloats } from './floatOptimizer'
+import blossom from 'edmonds-blossom'
 
 /**
  * Calcule le poids d'une paire selon les règles FIDE.
@@ -78,7 +78,7 @@ export function generateRound(
   }
 
   // Algorithme de Blossom : trouve l'appariement de poids maximum
-  const mate = blossom(edges, true) // true = maximise la cardinalité d'abord
+  const mate = blossom(edges) // true = maximise la cardinalité d'abord
 
   // Reconstruction des paires depuis le tableau mate
   const used = new Set<number>()
