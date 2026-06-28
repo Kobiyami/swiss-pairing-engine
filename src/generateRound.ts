@@ -58,7 +58,7 @@ export function generateRound(
   const sorted = sortByRanking(standings)
 
   let byePlayer: PlayerStanding | null = null
-  let players = sorted
+  let players = sorted.filter(s => !s.withdrawn)
 
   if (sorted.length % 2 !== 0) {
     byePlayer = selectByePlayer(sorted)

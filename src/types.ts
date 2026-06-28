@@ -19,13 +19,14 @@ export interface GameResult {
 
 export interface PlayerStanding {
   player: Player
-  score: number // points cumulés (1 = victoire, 0.5 = nulle, 0 = défaite)
+  score: number
   games: GameResult[]
   colorHistory: (Color | null)[]
-  colorDifference: number // nb blancs - nb noirs
+  colorDifference: number
   opponentsPlayed: Set<string>
   hasHadBye: boolean
   floatHistory: ('up' | 'down' | null)[]
+  withdrawn: boolean  // ← ajouter
 }
 
 export interface Pairing {

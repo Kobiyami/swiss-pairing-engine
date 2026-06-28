@@ -10,6 +10,7 @@ export function initStanding(player: Player): PlayerStanding {
     opponentsPlayed: new Set(),
     hasHadBye: false,
     floatHistory: [],
+    withdrawn: false,
   }
 }
 
@@ -46,7 +47,7 @@ export function applyGameResult(standing: PlayerStanding, game: GameResult): Pla
     colorDifference: colorDiff,
     opponentsPlayed: newOpponents,
     hasHadBye: standing.hasHadBye || game.result === 'bye',
-    floatHistory: [...standing.floatHistory, game.float ?? null],  // ← ajouter
+    floatHistory: [...standing.floatHistory, game.float ?? null],
   }
 }
 

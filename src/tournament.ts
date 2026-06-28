@@ -77,7 +77,11 @@ export class Tournament {
 
     this.standings = this.players.map(p => standingsMap.get(p.id)!)
   }
-
+withdrawPlayer(playerId: string): void {
+  const standing = this.standings.find(s => s.player.id === playerId)
+  if (!standing) return
+  standing.withdrawn = true
+}
   isComplete(): boolean {
     return this.currentRound >= this.info.totalRounds
   }
