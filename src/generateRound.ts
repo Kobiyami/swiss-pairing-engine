@@ -56,13 +56,14 @@ export function generateRound(
   roundNumber: number
 ): RoundPairings {
   const sorted = sortByRanking(standings)
+  const active = sorted.filter(s => !s.withdrawn)
 
   let byePlayer: PlayerStanding | null = null
-  let players = sorted.filter(s => !s.withdrawn)
+  let players = active
 
-  if (sorted.length % 2 !== 0) {
-    byePlayer = selectByePlayer(sorted)
-    players = sorted.filter(s => s.player.id !== byePlayer?.player.id)
+  if (active.length % 2 !== 0) {
+    byePlayer = selectByePlayer(active)
+    players = active.filter(s => s.player.id !== byePlayer?.player.id)
   }
 
   // Construction du graphe : chaque joueur est un nœud (son index dans players)
