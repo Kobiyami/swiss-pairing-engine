@@ -17,15 +17,35 @@ export class Tournament {
     this.currentRound = 0
   }
 
-  generateNextRound(): RoundPairings {
-    if (this.currentRound >= this.info.totalRounds) {
-      throw new Error('Tournament is already complete')
-    }
-    this.currentRound++
-    const pairings = generateRound(this.standings, this.currentRound)
-    this.roundPairings.push(pairings)
-    return pairings
+  generateNextRound(requestedByes: string[] = []): RoundPairings {
+  if (this.currentRound >= this.info.totalRounds) {
+    throw new Error('Tournament is already complete')
   }
+  this.currentRound++
+
+  const activeStandings = this.standings.filter(
+    s => !s.withdrawn && !requestedByes.includes(s.player.id)
+  )
+  const byeStandings = this.standings.filter(
+    s => !s.withdrawn && requestedByes.includes(s.player.id)
+  )
+
+  const pairings = generateRound(activeStandings, this.currentRound)
+
+  let board = pairings.pairings.length + 1
+  for (const s of byeStandings) {
+    pairings.pairings.push({
+      board: board++,
+      whiteId: s.player.id,
+      blackId: null,
+      isBye: true,
+      isRequestedBye: true,
+    })
+  }
+
+  this.roundPairings.push(pairings)
+  return pairings
+}
 
   submitResults(roundNumber: number, results: GameResultInput[]): void {
     const standingsMap = new Map(this.standings.map(s => [s.player.id, s]))
@@ -44,6 +64,19 @@ export class Tournament {
         }
         continue
       }
+        if (result.result === 'requestedBye') {
+  const player = standingsMap.get(result.whiteId)
+  if (player) {
+    standingsMap.set(player.player.id, applyGameResult(player, {
+      round: roundNumber,
+      opponentId: null,
+      color: null,
+      result: 'requestedBye',
+      float: null,
+    }))
+  }
+  continue
+}
 
       const whitePlayer = standingsMap.get(result.whiteId)
       const blackPlayer = result.blackId ? standingsMap.get(result.blackId) : null

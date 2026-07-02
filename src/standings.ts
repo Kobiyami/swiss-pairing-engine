@@ -23,6 +23,8 @@ function scoreForResult(result: GameResult['result']): number {
       return 0.5
     case 'loss':
       return 0
+      case 'requestedBye':
+      return 0.5
     case 'pending':
       return 0
   }

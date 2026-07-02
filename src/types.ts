@@ -6,7 +6,7 @@ export interface Player {
   pairingNumber: number // numéro attribué au départ (#1, #2...)
 }
 
-export type GameOutcome = 'win' | 'loss' | 'draw' | 'bye' | 'pending'
+export type GameOutcome = 'win' | 'loss' | 'draw' | 'bye' | 'requestedBye' | 'pending'
 export type Color = 'white' | 'black'
 
 export interface GameResult {
@@ -34,6 +34,7 @@ export interface Pairing {
   whiteId: string | null
   blackId: string | null
   isBye: boolean
+  isRequestedBye?: boolean
   whiteFloat?: 'up' | 'down' | null
   blackFloat?: 'up' | 'down' | null
 }
@@ -54,5 +55,5 @@ export interface TournamentInfo {
 export type GameResultInput = {
   whiteId: string
   blackId: string | null
-  result: 'white' | 'black' | 'draw' | 'bye'
+  result: 'white' | 'black' | 'draw' | 'bye' | 'requestedBye'
 }
